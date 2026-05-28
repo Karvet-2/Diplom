@@ -23,7 +23,6 @@ CREATE TABLE "Team" (
     "category" TEXT NOT NULL,
     "championshipType" TEXT NOT NULL DEFAULT 'adult',
     "status" TEXT NOT NULL DEFAULT 'pending',
-    "coachName" TEXT,
     "stage" TEXT NOT NULL DEFAULT 'qualifier',
     "resultsPublished" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

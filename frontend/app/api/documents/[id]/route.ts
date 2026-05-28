@@ -46,11 +46,11 @@ export async function PUT(
       )
     }
 
-    const isAdminOrOrganizer = ['admin', 'organizer'].includes(authResult.user.role)
+    const isAdminOrJudge = ['admin', 'judge'].includes(authResult.user.role)
 
-    if (!isAdminOrOrganizer) {
+    if (!isAdminOrJudge) {
       return NextResponse.json(
-        { error: 'Forbidden. Only admin and organizer can update document status' },
+        { error: 'Forbidden. Only admin and judge can update document status' },
         { status: 403 }
       )
     }
@@ -117,9 +117,9 @@ export async function DELETE(
     }
 
     const isOwner = document.userId === authResult.user.id
-    const isAdminOrOrganizer = ['admin', 'organizer'].includes(authResult.user.role)
+    const isAdminOrJudge = ['admin', 'judge'].includes(authResult.user.role)
 
-    if (!isOwner && !isAdminOrOrganizer) {
+    if (!isOwner && !isAdminOrJudge) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }

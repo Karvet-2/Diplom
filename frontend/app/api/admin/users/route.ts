@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@backend/lib/prisma'
 import { requireRole } from '@backend/lib/middleware'
 import { hashPassword } from '@backend/lib/auth'
+import { normalizeEmail } from '@backend/lib/normalize-email'
+import {
+  EMAIL_ALREADY_REGISTERED,
+  findUserByNormalizedEmail,
+} from '@backend/lib/user-team-rules'
 
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(request, ['admin'])
@@ -51,7 +56,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const allowedRoles = ['participant', 'organizer', 'admin']
+    const allowedRoles = ['participant', 'judge', 'admin']
     if (!allowedRoles.includes(role)) {
       return NextResponse.json(
         { error: `Invalid role. Allowed roles: ${allowedRoles.join(', ')}` },
@@ -59,22 +64,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    })
+    const normalizedEmail = normalizeEmail(email)
+    const existingUser = await findUserByNormalizedEmail(normalizedEmail)
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: EMAIL_ALREADY_REGISTERED }, { status: 409 })
     }
 
     const hashedPassword = await hashPassword(password)
 
     const user = await prisma.user.create({
       data: {
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         fio,
         phone: phone || null,
@@ -100,11 +101,12 @@ export async function POST(request: NextRequest) {
       message: 'User created successfully',
       user,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Create user error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    const err = error as { code?: string }
+    if (err?.code === 'P2002') {
+      return NextResponse.json({ error: EMAIL_ALREADY_REGISTERED }, { status: 409 })
+    }
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

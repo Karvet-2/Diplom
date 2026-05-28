@@ -20,8 +20,8 @@ export default function LoginPage() {
     if (isAuthenticated && user) {
       if (user.role === 'admin') {
         router.push('/admin')
-      } else if (user.role === 'organizer') {
-        router.push('/organizer')
+      } else if (user.role === 'judge') {
+        router.push('/judge')
       } else {
         router.push('/')
       }
@@ -114,15 +114,6 @@ export default function LoginPage() {
               <span>{loading ? 'Вход...' : 'Войти'}</span>
             </Button>
           </form>
-
-          <div className="text-center mb-4 sm:mb-6">
-            <Link
-              href="/forgot-password"
-              className="text-sm text-[#64748B] hover:text-[#0F172A] underline underline-offset-2"
-            >
-              Забыли пароль?
-            </Link>
-          </div>
 
           <p className="chef-login-footer">
             Нет аккаунта?{' '}

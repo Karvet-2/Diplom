@@ -113,3 +113,4 @@ export default function AdminNavigation({ isMobile = false, onNavigate }: AdminN
     </nav>
   )
 }
+

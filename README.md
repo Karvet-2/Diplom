@@ -1,60 +1,51 @@
-# Цифровая система оценивания кулинарного чемпионата "Chef a la Russe"
+Chef a la Russe — запуск с нуля
 
-Next.js 14, Prisma, PostgreSQL, JWT.
+Как поднять проект на другом компьютере (Windows, macOS или Linux).
 
-## Структура репозитория
+1. Установить Node.js 18 или новее и PostgreSQL.
 
-| Папка / файл | Содержимое |
-|--------------|------------|
-| **`frontend/`** | Next.js: `app/`, `components/`, `lib/api.ts`, `next.config.js`, `tailwind.config.js`, `postcss.config.js`, `tsconfig.json`, `next-env.d.ts`, **`.eslintrc.json`** |
-| **`backend/`** | Prisma (`prisma/schema.prisma`), `lib/`, `services/` |
-| **`docker/`** | **`Dockerfile`**, **`docker-compose.yml`**, **`docker-compose.dev.yml`** |
-| **`scripts/`** | Утилиты, `move-layout.js`, **`SYNC.cmd`** (перенос UI в `frontend/`) |
-| **`docs/`** | Документация, например **`STRUCTURE.md`** |
-| **`secrets/`** | Локальные секреты (например перенесённый `admin-credentials.txt`) — не коммитятся |
-| **`uploads/`** | Загруженные файлы; в репозитории закреплены только пустые `files/`, `documents/`, `violations/` (`.gitkeep`) |
-| **Корень** | `package.json`, `package-lock.json`, **`tsconfig.json`**, `.gitignore`, `.env`, **`README.md`**, **`SYNC.cmd`** (ярлык → `scripts\SYNC.cmd`) |
+2. Склонировать или скопировать папку проекта на диск.
 
-Подробнее: [`docs/STRUCTURE.md`](docs/STRUCTURE.md).
-
-Схема БД: **`backend/prisma/schema.prisma`**.
-
-## Первый шаг / синхронизация UI
-
-Если нужно перенести `app/` из корня в `frontend/`:
-
-```bat
-SYNC.cmd
-```
-
-или: `node scripts/move-layout.js`  
-(основной сценарий: **`scripts\SYNC.cmd`**)
-
-## Запуск
+3. В корне проекта открыть терминал и выполнить:
 
 ```bash
 npm install
-# .env в корне: DATABASE_URL, JWT_SECRET
+```
+
+4. Создать в корне проекта файл .env с содержимым:
+
+```env
+DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/chef_championship
+JWT_SECRET=любой-длинный-секрет-минимум-32-символа
+```
+
+Замените USER, PASSWORD и имя базы на свои. Базу chef_championship нужно создать в PostgreSQL заранее.
+
+5. Применить схему базы и тестовых пользователей:
+
+```bash
 npm run db:generate
-npm run db:push
+npm run db:migrate
+npm run db:seed
+```
+
+Если migrate выдаёт ошибку на уже существующей базе, уточните у автора проекта или выполните npm run db:push (осторожно: может затереть данные).
+
+6. Запустить приложение:
+
+```bash
 npm run dev
 ```
 
-Судья: `npm run create-organizer <email> <пароль> "<ФИО>"`
+7. Открыть в браузере: http://localhost:3000
 
-## Docker
+Учётные записи после npm run db:seed
 
-Команды из **`package.json`** используют файлы в **`docker/`** (запускать из **корня** репозитория):
+| Роль  | Email               | Пароль     |
+|-------|---------------------|------------|
+| Админ | admin@example.com   | Admin123!  |
+| Судья | judge@example.com   | Judge123!  |
 
-```bash
-npm run docker:db:up
-npm run docker:up
-```
+Участники создаются через регистрацию на сайте (/register).
 
-Или явно:
-
-```bash
-docker compose -f docker/docker-compose.yml up -d --build
-```
-
-См. [`docker/README.md`](docker/README.md).
+Файлы загрузок сохраняются в папку uploads/ в корне проекта — у процесса Node должны быть права на запись.

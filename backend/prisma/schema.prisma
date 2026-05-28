@@ -19,10 +19,8 @@ model User {
   city        String?
   organization String?
   birthDate   DateTime?
-  role        String   @default("participant") // participant, organizer, judge, admin
+  role        String   @default("participant") // participant, judge, admin
   status      String   @default("pending") // pending, confirmed
-  passwordResetToken   String?   @unique
-  passwordResetExpires DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -37,7 +35,6 @@ model Team {
   category          String   // Hot Kitchen, etc.
   championshipType  String   @default("adult") // adult, junior
   status            String   @default("pending") // pending, confirmed
-  coachName         String?
   stage             String   @default("qualifier") // qualifier, final (этап чемпионата)
   resultsPublished  Boolean  @default(false) // скрывать результаты от участников до публикации
   createdAt         DateTime @default(now())
@@ -58,6 +55,7 @@ model TeamMember {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
   
+  @@unique([userId])
   @@unique([userId, teamId])
 }
 

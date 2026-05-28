@@ -23,23 +23,23 @@ async function main() {
       allUsers.forEach(user => {
         const roleIcon =
           user.role === 'admin' ? '👑' :
-            user.role === 'organizer' ? '🎯' :
-              user.role === 'organizer' ? '👥' : '👤'
+            user.role === 'judge' ? '🎯' :
+              user.role === 'participant' ? '👤' : '👥'
         console.log(`  ${roleIcon} ${user.fio} (${user.email})`)
         console.log(`     Роль: ${user.role}, Статус: ${user.status}`)
       })
     }
 
-    const organizers = await prisma.user.findMany({
-      where: { role: 'organizer' },
+    const judges = await prisma.user.findMany({
+      where: { role: 'judge' },
       select: { email: true, fio: true, status: true },
     })
 
-    if (organizers.length > 0) {
-      console.log(`\n✅ Найдено судей: ${organizers.length}`)
+    if (judges.length > 0) {
+      console.log(`\n✅ Найдено судей: ${judges.length}`)
     } else {
       console.log('\n⚠️  Судьи не найдены')
-      console.log('   Создайте судью: npm run create-organizer')
+      console.log('   Создайте судью: npm run create-judge')
     }
 
     console.log('\n✅ База данных готова к работе!')

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/layout/Header'
 import Button from '@/components/ui/Button'
@@ -8,6 +8,9 @@ import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { api, Document } from '@/lib/api'
 import { getToken } from '@/lib/api'
+import { useLoadSeq } from '@/lib/use-load-seq'
+import AppToast, { type ToastVariant } from '@/components/ui/Toast'
+import { ATTACH_BLOCKED_DOCUMENT_MESSAGE } from '@/lib/attach-messages'
 
 type RequiredDoc = {
   type: 'passport' | 'medbook'
@@ -26,25 +29,35 @@ export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [uploadingType, setUploadingType] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; variant: ToastVariant } | null>(null)
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const { nextSeq, isCurrent } = useLoadSeq()
 
-  useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated) router.push('/login')
-      else loadDocuments()
-    }
-  }, [loading, isAuthenticated, router])
-
-  const loadDocuments = async () => {
+  const loadDocuments = useCallback(async () => {
+    const seq = nextSeq()
+    setDataLoading(true)
     try {
       const docs = await api.getDocuments()
+      if (!isCurrent(seq)) return
       setDocuments(docs)
     } catch (error) {
       console.error('Error loading documents:', error)
-      setDocuments([])
     } finally {
-      setDataLoading(false)
+      if (isCurrent(seq)) setDataLoading(false)
     }
+  }, [isCurrent, nextSeq])
+
+  useEffect(() => {
+    if (loading) return
+    if (!isAuthenticated) {
+      router.push('/login')
+      return
+    }
+    loadDocuments()
+  }, [loading, isAuthenticated, router, loadDocuments])
+
+  const showToast = (message: string, variant: ToastVariant = 'error') => {
+    setToast({ message, variant })
   }
 
   const handleFileSelect = async (
@@ -54,13 +67,19 @@ export default function DocumentsPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
+    if (docsByType[documentType]) {
+      showToast(ATTACH_BLOCKED_DOCUMENT_MESSAGE)
+      e.target.value = ''
+      return
+    }
+
     setUploadingType(documentType)
     try {
       await api.uploadDocument(file, documentType)
       await loadDocuments()
       if (inputRefs.current[documentType]) inputRefs.current[documentType]!.value = ''
     } catch (error: any) {
-      alert(error.message || 'Ошибка загрузки документа')
+      showToast(error.message || 'Ошибка загрузки документа')
     } finally {
       setUploadingType(null)
     }
@@ -168,7 +187,9 @@ export default function DocumentsPage() {
           <div className="bg-white rounded-[26px] shadow-[0px_4px_17.8px_rgba(0,0,0,0.25)] p-6 sm:p-7 md:p-8 w-full flex flex-col">
             <div className="mb-4 sm:mb-5 md:mb-6">
               <h2 className="text-sm sm:text-base md:text-[15.19px] font-semibold text-black">Отдельные слоты документов</h2>
-              <p className="text-xs sm:text-sm text-[#71717B] mt-1">Каждый документ загружается в свой фрейм. Повторная загрузка заменяет файл в этом слоте.</p>
+              <p className="text-xs sm:text-sm text-[#71717B] mt-1">
+                Каждый документ загружается в свой слот. Чтобы загрузить другой файл, сначала удалите текущий.
+              </p>
             </div>
 
             <div className="space-y-3 sm:space-y-4 flex-1">
@@ -210,13 +231,24 @@ export default function DocumentsPage() {
                           className="hidden"
                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                         />
-                        <button
-                          onClick={() => inputRefs.current[item.type]?.click()}
-                          disabled={uploadingType === item.type}
-                          className="bg-[#F1F5F9] text-black hover:bg-[#0F172A] hover:text-white px-3 py-2 rounded-md text-xs sm:text-sm font-semibold transition-colors disabled:opacity-50"
-                        >
-                          {uploadingType === item.type ? 'Загрузка...' : doc ? 'Заменить' : 'Загрузить'}
-                        </button>
+                        {!doc ? (
+                          <button
+                            type="button"
+                            onClick={() => inputRefs.current[item.type]?.click()}
+                            disabled={uploadingType === item.type}
+                            className="bg-[#F1F5F9] text-black hover:bg-[#0F172A] hover:text-white px-3 py-2 rounded-md text-xs sm:text-sm font-semibold transition-colors disabled:opacity-50"
+                          >
+                            {uploadingType === item.type ? 'Загрузка...' : 'Загрузить'}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => showToast(ATTACH_BLOCKED_DOCUMENT_MESSAGE)}
+                            className="bg-[#F1F5F9] text-black px-3 py-2 rounded-md text-xs sm:text-sm font-semibold opacity-60 cursor-not-allowed"
+                          >
+                            Загрузить
+                          </button>
+                        )}
                         {doc && canPreview(doc.name) && (
                           <button onClick={() => handleView(doc)} className="bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-3 py-2 rounded-md text-xs sm:text-sm font-semibold transition-colors">
                             Просмотр
@@ -241,6 +273,9 @@ export default function DocumentsPage() {
           </div>
         </div>
       </main>
+      {toast && (
+        <AppToast message={toast.message} variant={toast.variant} onClose={() => setToast(null)} />
+      )}
     </div>
   )
 }

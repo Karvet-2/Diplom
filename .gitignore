@@ -52,7 +52,6 @@ yarn-error.log*
 # admin credentials / локальные секреты
 admin-credentials.txt
 /secrets/*
-!/secrets/README.md
 
 # локальная история редактора
 .history/

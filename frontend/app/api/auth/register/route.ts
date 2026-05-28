@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@backend/lib/prisma'
 import { hashPassword, generateToken } from '@backend/lib/auth'
+import { normalizeEmail } from '@backend/lib/normalize-email'
+import {
+  EMAIL_ALREADY_REGISTERED,
+  findUserByNormalizedEmail,
+} from '@backend/lib/user-team-rules'
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,22 +26,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    })
+    const normalizedEmail = normalizeEmail(email)
+    const existingUser = await findUserByNormalizedEmail(normalizedEmail)
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: EMAIL_ALREADY_REGISTERED }, { status: 409 })
     }
 
     const hashedPassword = await hashPassword(password)
 
     const user = await prisma.user.create({
       data: {
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         fio,
         phone: phone || null,
@@ -68,11 +69,12 @@ export async function POST(request: NextRequest) {
       token,
       user,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Register error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    const err = error as { code?: string }
+    if (err?.code === 'P2002') {
+      return NextResponse.json({ error: EMAIL_ALREADY_REGISTERED }, { status: 409 })
+    }
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

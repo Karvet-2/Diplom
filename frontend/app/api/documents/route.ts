@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@backend/lib/prisma'
 import { requireAuth } from '@backend/lib/middleware'
-import { writeFile, mkdir, unlink } from 'fs/promises'
+import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import { getUploadsRoot } from '@backend/lib/upload-paths'
 
@@ -74,15 +74,11 @@ export async function POST(request: NextRequest) {
         name: { startsWith: prefix },
       },
     })
-    for (const prev of prevDocs) {
-      try {
-        await unlink(join(UPLOAD_DIR, prev.fileName))
-      } catch {}
-    }
     if (prevDocs.length > 0) {
-      await prisma.document.deleteMany({
-        where: { id: { in: prevDocs.map((d) => d.id) } },
-      })
+      return NextResponse.json(
+        { error: 'Сначала открепите старый документ' },
+        { status: 409 }
+      )
     }
 
     const document = await prisma.document.create({

@@ -6,7 +6,7 @@ export interface User {
   city?: string
   organization?: string
   birthDate?: string
-  role: 'participant' | 'organizer' | 'admin'
+  role: 'participant' | 'judge' | 'admin'
   status: 'pending' | 'confirmed' | 'rejected'
   createdAt?: string
   updatedAt?: string
@@ -156,28 +156,6 @@ export const api = {
     return result
   },
 
-  async requestPasswordReset(email: string): Promise<{
-    ok: boolean
-    message?: string
-    resetLink?: string
-  }> {
-    const response = await fetch('/api/auth/forgot-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    })
-    return handleResponse(response)
-  },
-
-  async resetPassword(token: string, password: string): Promise<{ ok: boolean }> {
-    const response = await fetch('/api/auth/reset-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, password }),
-    })
-    return handleResponse(response)
-  },
-
   logout(): void {
     removeToken()
   },
@@ -292,14 +270,14 @@ export const api = {
   },
 
   async getTeamDishUploads(teamId: string): Promise<UploadWithUser[]> {
-    const response = await fetch(`/api/organizer/teams/${teamId}/uploads`, {
+    const response = await fetch(`/api/judge/teams/${teamId}/uploads`, {
       headers: { Authorization: `Bearer ${getToken()}` },
     })
     return handleResponse<UploadWithUser[]>(response)
   },
 
-  async getOrganizerUploads(userId?: string): Promise<UploadWithUser[]> {
-    const url = userId ? `/api/organizer/uploads?userId=${userId}` : '/api/organizer/uploads'
+  async getJudgeUploads(userId?: string): Promise<UploadWithUser[]> {
+    const url = userId ? `/api/judge/uploads?userId=${userId}` : '/api/judge/uploads'
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${getToken()}` },
     })
@@ -313,15 +291,15 @@ export const api = {
     return handleResponse<Result[]>(response)
   },
 
-  async getOrganizerParticipants(): Promise<User[]> {
-    const response = await fetch('/api/organizer/participants', {
+  async getJudgeParticipants(): Promise<User[]> {
+    const response = await fetch('/api/judge/participants', {
       headers: { Authorization: `Bearer ${getToken()}` },
     })
     return handleResponse<User[]>(response)
   },
 
   async updateParticipantStatus(userId: string, status: string): Promise<User> {
-    const response = await fetch('/api/organizer/participants', {
+    const response = await fetch('/api/judge/participants', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -332,8 +310,8 @@ export const api = {
     return handleResponse<User>(response)
   },
 
-  async getOrganizerTeams(): Promise<any[]> {
-    const response = await fetch('/api/organizer/teams', {
+  async getJudgeTeams(): Promise<any[]> {
+    const response = await fetch('/api/judge/teams', {
       headers: { Authorization: `Bearer ${getToken()}` },
     })
     return handleResponse<any[]>(response)
@@ -343,10 +321,9 @@ export const api = {
     name: string
     category: string
     championshipType?: 'adult' | 'junior'
-    coachName?: string | null
     userIds?: string[]
   }): Promise<Team> {
-    const response = await fetch('/api/organizer/teams', {
+    const response = await fetch('/api/judge/teams', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -357,23 +334,22 @@ export const api = {
     return handleResponse<Team>(response)
   },
 
-  async getOrganizerTeam(teamId: string): Promise<any> {
-    const response = await fetch(`/api/organizer/teams/${teamId}`, {
+  async getJudgeTeam(teamId: string): Promise<any> {
+    const response = await fetch(`/api/judge/teams/${teamId}`, {
       headers: { Authorization: `Bearer ${getToken()}` },
     })
     return handleResponse<any>(response)
   },
 
-  async updateOrganizerTeam(
+  async updateJudgeTeam(
     teamId: string,
     data: {
       name?: string
       category?: string
-      coachName?: string | null
       championshipType?: 'adult' | 'junior'
     }
   ): Promise<any> {
-    const response = await fetch(`/api/organizer/teams/${teamId}`, {
+    const response = await fetch(`/api/judge/teams/${teamId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -384,8 +360,8 @@ export const api = {
     return handleResponse<any>(response)
   },
 
-  async deleteOrganizerTeam(teamId: string): Promise<void> {
-    const response = await fetch(`/api/organizer/teams/${teamId}`, {
+  async deleteJudgeTeam(teamId: string): Promise<void> {
+    const response = await fetch(`/api/judge/teams/${teamId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${getToken()}` },
     })
@@ -393,7 +369,7 @@ export const api = {
   },
 
   async publishTeamResults(teamId: string, published: boolean): Promise<any> {
-    const response = await fetch(`/api/organizer/teams/${teamId}/publish`, {
+    const response = await fetch(`/api/judge/teams/${teamId}/publish`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -405,7 +381,7 @@ export const api = {
   },
 
   async updateTeamStage(teamId: string, stage: 'qualifier' | 'final'): Promise<any> {
-    const response = await fetch(`/api/organizer/teams/${teamId}/stage`, {
+    const response = await fetch(`/api/judge/teams/${teamId}/stage`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -417,7 +393,7 @@ export const api = {
   },
 
   async updateTeamStatus(teamId: string, status: string): Promise<any> {
-    const response = await fetch('/api/organizer/teams', {
+    const response = await fetch('/api/judge/teams', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -428,25 +404,18 @@ export const api = {
     return handleResponse<any>(response)
   },
 
-  async getOrganizerResults(): Promise<any[]> {
-    const response = await fetch('/api/organizer/results', {
+  async getJudgeResults(): Promise<any[]> {
+    const response = await fetch('/api/judge/results', {
       headers: { Authorization: `Bearer ${getToken()}` },
     })
     return handleResponse<any[]>(response)
   },
 
-  async getOrganizerJudges(): Promise<User[]> {
-    const response = await fetch('/api/organizer/judges', {
+  async getJudges(): Promise<User[]> {
+    const response = await fetch('/api/judge/judges', {
       headers: { Authorization: `Bearer ${getToken()}` },
     })
     return handleResponse<User[]>(response)
-  },
-
-  async getJudgeResults(teamId: string, judgeId: string): Promise<Result[]> {
-    const response = await fetch(`/api/organizer/teams/${teamId}/judges/${judgeId}`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
-    })
-    return handleResponse<Result[]>(response)
   },
 
   async getJudgeResultsByStage(
@@ -455,7 +424,7 @@ export const api = {
     stage: 'qualifier' | 'final'
   ): Promise<Result[]> {
     const response = await fetch(
-      `/api/organizer/teams/${teamId}/judges/${judgeId}?stage=${stage}`,
+      `/api/judge/teams/${teamId}/judges/${judgeId}?stage=${stage}`,
       { headers: { Authorization: `Bearer ${getToken()}` } }
     )
     return handleResponse<Result[]>(response)
@@ -477,7 +446,7 @@ export const api = {
       penalties?: number
     }
   ): Promise<Result> {
-    const response = await fetch(`/api/organizer/teams/${teamId}/judges/${judgeId}`, {
+    const response = await fetch(`/api/judge/teams/${teamId}/judges/${judgeId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -495,6 +464,23 @@ export const api = {
     return handleResponse<User[]>(response)
   },
 
+  async getAdminStatistics(): Promise<{
+    totalUsers: number
+    totalTeams: number
+    totalResults: number
+    usersByRole: { participant: number; judge: number; admin: number }
+    usersByStatus: { confirmed: number; pending: number; rejected: number }
+    teamsByStatus: { confirmed: number; pending: number }
+    teamsByCategory: Record<string, number>
+    avgTeamScore: string
+    topTeams: Array<{ id: string; name: string; category: string; avgScore: number; stage?: string }>
+  }> {
+    const response = await fetch('/api/admin/statistics', {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+    return handleResponse(response)
+  },
+
   async createUser(data: {
     email: string
     password: string
@@ -502,7 +488,7 @@ export const api = {
     phone?: string
     city?: string
     organization?: string
-    role: 'participant' | 'organizer' | 'admin'
+    role: 'participant' | 'judge' | 'admin'
     status?: 'pending' | 'confirmed'
   }): Promise<User> {
     const response = await fetch('/api/admin/users', {
@@ -524,7 +510,7 @@ export const api = {
       phone?: string
       city?: string
       organization?: string
-      role?: 'participant' | 'organizer' | 'admin'
+      role?: 'participant' | 'judge' | 'admin'
       status?: 'pending' | 'confirmed'
       password?: string
     }
@@ -549,7 +535,7 @@ export const api = {
   },
 
   async addTeamMember(teamId: string, userId: string): Promise<TeamMember> {
-    const response = await fetch(`/api/organizer/teams/${teamId}/members`, {
+    const response = await fetch(`/api/judge/teams/${teamId}/members`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -561,7 +547,7 @@ export const api = {
   },
 
   async removeTeamMember(teamId: string, memberId: string): Promise<void> {
-    const response = await fetch(`/api/organizer/teams/${teamId}/members?memberId=${memberId}`, {
+    const response = await fetch(`/api/judge/teams/${teamId}/members?memberId=${memberId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${getToken()}` },
     })
@@ -576,7 +562,7 @@ export const api = {
     if (userId) params.set('userId', userId)
     if (teamId) params.set('teamId', teamId)
     const q = params.toString()
-    const url = q ? `/api/organizer/documents?${q}` : '/api/organizer/documents'
+    const url = q ? `/api/judge/documents?${q}` : '/api/judge/documents'
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${getToken()}` },
     })
@@ -589,7 +575,7 @@ export const api = {
     formData.append('resultId', resultId)
     formData.append('criterionKey', criterionKey)
 
-    const response = await fetch('/api/organizer/violation-photos', {
+    const response = await fetch('/api/judge/violation-photos', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${getToken()}`,
@@ -600,7 +586,7 @@ export const api = {
   },
 
   async deleteViolationPhoto(photoId: string): Promise<void> {
-    const response = await fetch(`/api/organizer/violation-photos?id=${photoId}`, {
+    const response = await fetch(`/api/judge/violation-photos?id=${photoId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${getToken()}` },
     })
@@ -609,8 +595,8 @@ export const api = {
 
   async fixResultSheet(teamId: string, judgeId: string, stage?: 'qualifier' | 'final'): Promise<void> {
     const url = stage
-      ? `/api/organizer/teams/${teamId}/judges/${judgeId}/fix?stage=${stage}`
-      : `/api/organizer/teams/${teamId}/judges/${judgeId}/fix`
+      ? `/api/judge/teams/${teamId}/judges/${judgeId}/fix?stage=${stage}`
+      : `/api/judge/teams/${teamId}/judges/${judgeId}/fix`
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -623,8 +609,8 @@ export const api = {
 
   async unfixResultSheet(teamId: string, judgeId: string, stage?: 'qualifier' | 'final'): Promise<void> {
     const url = stage
-      ? `/api/organizer/teams/${teamId}/judges/${judgeId}/unfix?stage=${stage}`
-      : `/api/organizer/teams/${teamId}/judges/${judgeId}/unfix`
+      ? `/api/judge/teams/${teamId}/judges/${judgeId}/unfix?stage=${stage}`
+      : `/api/judge/teams/${teamId}/judges/${judgeId}/unfix`
     const response = await fetch(url, {
       method: 'POST',
       headers: {

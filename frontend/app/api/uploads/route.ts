@@ -87,6 +87,22 @@ export async function POST(request: NextRequest) {
 
     await mkdir(UPLOAD_DIR, { recursive: true })
 
+    const existing = await prisma.upload.findFirst({
+      where: {
+        teamId: membership.teamId,
+        dishNumber,
+        fileType,
+      },
+    })
+    if (existing) {
+      const slotLabel =
+        fileType === 'photo' ? 'фото' : fileType === 'techCard' ? 'технологическую карту' : 'меню'
+      return NextResponse.json(
+        { error: `Сначала открепите старое ${slotLabel}` },
+        { status: 409 }
+      )
+    }
+
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
     const fileName = `${Date.now()}-${file.name}`

@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@backend/lib/prisma'
 import { requireRole } from '@backend/lib/middleware'
 import { hashPassword } from '@backend/lib/auth'
+import { normalizeEmail } from '@backend/lib/normalize-email'
+import {
+  EMAIL_ALREADY_REGISTERED,
+  findUserByNormalizedEmail,
+} from '@backend/lib/user-team-rules'
 
 export async function PUT(
   request: NextRequest,
@@ -16,8 +21,16 @@ export async function PUT(
     const body = await request.json()
     const { email, fio, phone, city, organization, role, status, password } = body
 
-    const updateData: any = {}
-    if (email) updateData.email = email
+    if (email) {
+      const normalizedEmail = normalizeEmail(email)
+      const duplicate = await findUserByNormalizedEmail(normalizedEmail)
+      if (duplicate && duplicate.id !== id) {
+        return NextResponse.json({ error: EMAIL_ALREADY_REGISTERED }, { status: 409 })
+      }
+    }
+
+    const updateData: Record<string, unknown> = {}
+    if (email) updateData.email = normalizeEmail(email)
     if (fio) updateData.fio = fio
     if (phone !== undefined) updateData.phone = phone || null
     if (city !== undefined) updateData.city = city || null
@@ -46,12 +59,13 @@ export async function PUT(
     })
 
     return NextResponse.json({ message: 'User updated successfully', user })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update user error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    const err = error as { code?: string }
+    if (err?.code === 'P2002') {
+      return NextResponse.json({ error: EMAIL_ALREADY_REGISTERED }, { status: 409 })
+    }
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 

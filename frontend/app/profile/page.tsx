@@ -2,17 +2,20 @@
 
 import { useEffect, useState } from 'react'
 import Header from '@/components/layout/Header'
-import { api, Team } from '@/lib/api'
+import PasswordChangeModal from '@/components/profile/PasswordChangeModal'
+import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
+import AppToast, { type ToastVariant } from '@/components/ui/Toast'
 
 export default function ProfilePage() {
   const { isAuthenticated } = useAuth()
   const [showPasswordChange, setShowPasswordChange] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [team, setTeam] = useState<Team | null>(null)
+  const [savingPassword, setSavingPassword] = useState(false)
+  const [toast, setToast] = useState<{ message: string; variant: ToastVariant } | null>(null)
   const [formData, setFormData] = useState<{
     fio: string
     phone: string
@@ -29,20 +32,10 @@ export default function ProfilePage() {
     birthDate: '',
   })
 
-  const [passwordData, setPasswordData] = useState({
-    current: '',
-    new: '',
-    confirm: '',
-  })
-
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const [user, teamData] = await Promise.all([
-          api.getProfile(),
-          api.getTeam().catch(() => null),
-        ])
-
+        const user = await api.getProfile()
         setFormData({
           fio: user.fio || '',
           phone: user.phone || '',
@@ -51,8 +44,6 @@ export default function ProfilePage() {
           city: user.city || '',
           birthDate: user.birthDate ? user.birthDate.substring(0, 10) : '',
         })
-
-        setTeam(teamData)
       } catch (error) {
         console.error('Error loading profile', error)
       } finally {
@@ -82,6 +73,40 @@ export default function ProfilePage() {
       alert(error.message || 'Ошибка сохранения профиля')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const showToast = (message: string, variant: ToastVariant) => {
+    setToast({ message, variant })
+  }
+
+  const handleChangePassword = async (values: {
+    current: string
+    newPassword: string
+    confirm: string
+  }) => {
+    if (!values.current) {
+      showToast('Введите текущий пароль', 'error')
+      return
+    }
+    if (!values.newPassword || values.newPassword.length < 6) {
+      showToast('Новый пароль — не короче 6 символов', 'error')
+      return
+    }
+    if (values.newPassword !== values.confirm) {
+      showToast('Пароли не совпадают', 'error')
+      return
+    }
+
+    try {
+      setSavingPassword(true)
+      await api.changePassword(values.current, values.newPassword)
+      setShowPasswordChange(false)
+      showToast('Пароль успешно изменён', 'success')
+    } catch (error: any) {
+      showToast(error.message || 'Не удалось сменить пароль', 'error')
+    } finally {
+      setSavingPassword(false)
     }
   }
 
@@ -213,78 +238,32 @@ export default function ProfilePage() {
                   </p>
                   <div className="bg-[#F1F5F9] rounded-[20px] px-4 py-2 inline-block max-w-[160px]">
                     <span className="text-[12.3px] font-semibold text-black block text-center whitespace-normal leading-tight">
-                      {team ? 'Сформирована судьями' : 'Не сформирована'}
+                      Сформирована судьями
                     </span>
                   </div>
                 </div>
-                {team ? (
-                  <div className="mt-2">
-                    <p className="text-[13px] font-semibold text-black mb-1">
-                      {team.name}
-                    </p>
-                    <p className="text-[12px] font-medium text-[#71717B]">
-                      {team.category}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-[12px] font-medium text-[#71717B]">
-                    Вы не состоите в команде
-                  </p>
-                )}
+                <p className="text-[12px] font-medium text-[#71717B]">
+                  Если команда не отображается — сообщите судьям.
+                </p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-        {showPasswordChange && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-[20px] sm:rounded-[25px] shadow-lg p-6 sm:p-8 max-w-[450px] w-full">
-              <h3 className="text-sm sm:text-base md:text-[15.91px] font-semibold text-black mb-4 sm:mb-5 md:mb-6">
-                Смена пароля
-              </h3>
-              
-              <div className="space-y-3 sm:space-y-4">
-                <Input
-                  label="Текущий пароль"
-                  type="password"
-                  value={passwordData.current}
-                  onChange={(e) =>
-                    setPasswordData({ ...passwordData, current: e.target.value })
-                  }
-                />
-                
-                <Input
-                  label="Новый пароль"
-                  type="password"
-                  value={passwordData.new}
-                  onChange={(e) =>
-                    setPasswordData({ ...passwordData, new: e.target.value })
-                  }
-                />
-                
-                <Input
-                  label="Повтор нового пароля"
-                  type="password"
-                  value={passwordData.confirm}
-                  onChange={(e) =>
-                    setPasswordData({ ...passwordData, confirm: e.target.value })
-                  }
-                />
-              </div>
+        <PasswordChangeModal
+          open={showPasswordChange}
+          onClose={() => setShowPasswordChange(false)}
+          onSubmit={handleChangePassword}
+          saving={savingPassword}
+        />
 
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4 sm:mt-6">
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowPasswordChange(false)}
-                  className="w-full sm:w-auto"
-                >
-                  Отмена
-                </Button>
-                <Button className="w-full sm:w-auto">Сохранить</Button>
-              </div>
-            </div>
-          </div>
+        {toast && (
+          <AppToast
+            message={toast.message}
+            variant={toast.variant}
+            onClose={() => setToast(null)}
+          />
         )}
       </main>
     </div>

@@ -38,9 +38,9 @@ export async function GET(
     }
 
     const isOwner = document.userId === authResult.user.id
-    const isAdminOrOrganizer = ['admin', 'organizer'].includes(authResult.user.role)
+    const isAdminOrJudge = ['admin', 'judge'].includes(authResult.user.role)
 
-    if (!isOwner && !isAdminOrOrganizer) {
+    if (!isOwner && !isAdminOrJudge) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }

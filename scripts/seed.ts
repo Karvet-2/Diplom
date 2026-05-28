@@ -63,8 +63,7 @@ async function main() {
     email: judgeEmail,
     password: judgePassword,
     fio: judgeFio,
-    // В системе роль organizer используется как проверяющий/судья
-    role: 'organizer',
+    role: 'judge',
   })
 
   console.log('\n🎉 Сидирование завершено. Можно входить в систему с созданными учетными данными.')

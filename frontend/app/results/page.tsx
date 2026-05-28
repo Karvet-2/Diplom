@@ -374,19 +374,15 @@ export default function ResultsPage() {
                   <h3 className="text-[14.99px] font-semibold text-black mb-4 sm:mb-5 md:mb-6">
                     Справка
                   </h3>
-                  <div className="space-y-3 sm:space-y-4">
-                    <div className="bg-white border border-[#E3E9F0] rounded-[19px] p-3 sm:p-4">
-                      <p className="text-[14.33px] font-medium text-[#71717B] mb-2">
-                        Max за 1 блюдо
-                      </p>
-                      <p className="text-[22.36px] font-semibold text-black">100</p>
-                    </div>
-                    <div className="bg-white border border-[#E3E9F0] rounded-[19px] p-3 sm:p-4">
-                      <p className="text-[14.33px] font-medium text-[#71717B] mb-2">
-                        Итог (среднее по блюдам и судьям)
-                      </p>
-                      <p className="text-[22.36px] font-semibold text-black">100</p>
-                    </div>
+                  <div className="bg-white border border-[#E3E9F0] rounded-[19px] p-3 sm:p-4">
+                    <p className="text-[14.33px] font-medium text-[#71717B] mb-2">
+                      Максимум за одно блюдо
+                    </p>
+                    <p className="text-[22.36px] font-semibold text-black mb-3">100 баллов</p>
+                    <p className="text-[12px] font-medium text-[#71717B] leading-relaxed">
+                      Сводный балл команды слева — среднее оценок всех судей за квалификацию (тоже из 100).
+                      В таблице ниже — средние баллы по каждому критерию и блюду.
+                    </p>
                   </div>
                 </div>
               </div>

@@ -1,12 +1,12 @@
 import type { PrismaClient } from '@prisma/client'
 
-/** Просмотр/удаление материалов по блюдам: член команды, организатор/админ, судья с листом по этой команде */
+/** Доступ к загрузкам команды: участник, судья с листом по команде, админ. */
 export async function canAccessTeamUploadContent(
   prisma: PrismaClient,
   user: { id: string; role: string },
   teamId: string
 ): Promise<boolean> {
-  if (['admin', 'organizer'].includes(user.role)) return true
+  if (['admin', 'judge'].includes(user.role)) return true
   const member = await prisma.teamMember.findFirst({
     where: { userId: user.id, teamId },
   })

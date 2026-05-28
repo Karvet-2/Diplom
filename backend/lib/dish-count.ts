@@ -1,4 +1,3 @@
-/** Квалификация: юниоры — 2 блюда, взрослые — 3 */
 export function qualifierDishCount(team: {
   championshipType?: string | null
   category?: string | null
@@ -8,7 +7,6 @@ export function qualifierDishCount(team: {
   return 3
 }
 
-/** Финал: у всех категорий 2 блюда */
 export function dishCountForResultStage(
   stage: 'qualifier' | 'final',
   team: { championshipType?: string | null; category?: string | null }
@@ -17,10 +15,7 @@ export function dishCountForResultStage(
   return qualifierDishCount(team)
 }
 
-/**
- * Сколько блюд на текущем этапе команды (загрузки участника, лист судьи).
- * На финале — всегда 2, на квалификации — по типу команды.
- */
+/** Число блюд на текущем этапе команды (финал — 2; квалификация — по типу команды). */
 export function activeStageDishCount(team: {
   stage?: string | null
   championshipType?: string | null

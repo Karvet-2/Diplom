@@ -1,4 +1,9 @@
 const path = require('path')
+const { loadEnvConfig } = require('@next/env')
+
+// .env в корне репозитория (next dev ./frontend не подхватывает его сам)
+const repoRoot = path.join(__dirname, '..')
+loadEnvConfig(repoRoot, process.env.NODE_ENV !== 'production', undefined, true)
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
