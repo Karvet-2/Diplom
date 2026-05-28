@@ -62,14 +62,14 @@ function violationUploadDirs(): string[] {
 
 function violationFileCandidates(fileName: string): string[] {
   const names = violationFileNames(fileName)
-  const dirs = [...new Set(violationUploadDirs())]
+  const dirs = Array.from(new Set(violationUploadDirs()))
   const paths: string[] = []
   for (const dir of dirs) {
     for (const name of names) {
       paths.push(path.join(dir, name))
     }
   }
-  return [...new Set(paths.map((p) => path.normalize(p)))]
+  return Array.from(new Set(paths.map((p) => path.normalize(p))))
 }
 
 export async function resolveViolationPhotoPath(
