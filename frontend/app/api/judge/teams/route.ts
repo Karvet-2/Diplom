@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     let membersNested: { create: { userId: string; status: string }[] } | undefined
     if (userIds && userIds.length > 0) {
-      const uniqueUserIds = [...new Set(userIds as string[])]
+      const uniqueUserIds = Array.from(new Set(userIds as string[]))
       const teamCheck = await validateUsersForTeamAdd(uniqueUserIds)
       if (!teamCheck.ok) {
         return NextResponse.json({ error: teamCheck.error }, { status: 409 })

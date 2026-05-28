@@ -14,6 +14,7 @@ interface Team {
   name: string
   category: string
   championshipType?: string
+  stage?: 'qualifier' | 'final'
   avgScore?: string
   members?: Array<{ user: { fio: string } }>
 }

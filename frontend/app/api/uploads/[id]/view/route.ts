@@ -52,7 +52,7 @@ export async function GET(
     if (ext === 'doc') contentType = 'application/msword'
     if (ext === 'docx') contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(new Uint8Array(fileBuffer), {
       headers: {
         'Content-Type': contentType,
         'Content-Disposition': `inline; filename="${encodeURIComponent(upload.fileName)}"`,

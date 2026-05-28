@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const fileBuffer = await readViolationPhotoFile(photo.fileName)
     const contentType = contentTypeFromViolationFileName(photo.fileName)
 
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(new Uint8Array(fileBuffer), {
       headers: {
         'Content-Type': contentType,
         'Content-Disposition': `inline; filename="${photo.fileName}"`,

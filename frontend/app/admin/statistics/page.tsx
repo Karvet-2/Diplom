@@ -16,7 +16,13 @@ type StatsState = {
   teamsByStatus: { confirmed: number; pending: number }
   teamsByCategory: Record<string, number>
   avgTeamScore: string
-  topTeams: Array<{ id: string; name: string; category: string; avgScore?: number | string }>
+  topTeams: Array<{
+    id: string
+    name: string
+    category: string
+    stage?: string
+    avgScore?: number | string
+  }>
   loading: boolean
 }
 

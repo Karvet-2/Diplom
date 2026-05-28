@@ -84,7 +84,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
 ) {
   const [isCleared, setIsCleared] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLInputElement | null>(null)
   const setInputRef = (el: HTMLInputElement | null) => {
     inputRef.current = el
     if (typeof forwardedRef === 'function') forwardedRef(el)
